@@ -52,9 +52,6 @@
     <Reference Include="UnityEditor.Android.Extensions">
       <HintPath>..\GameCanvas-Unity\Library\UnityAssemblies\UnityEditor.Android.Extensions.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEditor.Graphs">
-      <HintPath>..\GameCanvas-Unity\Library\UnityAssemblies\UnityEditor.Graphs.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEditor.iOS.Extensions">
       <HintPath>..\GameCanvas-Unity\Library\UnityAssemblies\UnityEditor.iOS.Extensions.dll</HintPath>
     </Reference>

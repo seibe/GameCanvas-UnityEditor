@@ -69,7 +69,14 @@ namespace GameCanvas.Editor
             var mat = AssetDatabase.LoadAssetAtPath<Material>(MaterialPath);
 
             // データベースの作成
-            var db = ScriptableObject.CreateInstance<AssetHolder>();
+            if (!File.Exists(AssetHolder.Path))
+            {
+                var newDB = ScriptableObject.CreateInstance<AssetHolder>();
+                AssetDatabase.CreateAsset(newDB, AssetHolder.Path);
+            }
+
+            // データベースの保存
+            var db = AssetDatabase.LoadAssetAtPath<AssetHolder>(AssetHolder.Path);
             db.Images = sprites.OrderBy(x => x.Key).Select(x => x.Value).ToArray();
             db.Sounds = clips.OrderBy(x => x.Key).Select(x => x.Value).ToArray();
             db.Rect = rect;
@@ -77,23 +84,8 @@ namespace GameCanvas.Editor
             db.Dummy = dummy;
             db.Characters = characters.ToArray();
             db.Material = mat;
-
-            // データベースの保存
-            var absoluteDBPath = Path.Combine(projectDir, AssetHolder.Path);
-            if (File.Exists(absoluteDBPath))
-            {
-                var tempPath = AssetHolder.Path + ".new.asset";
-                var absoluteTempPath = Path.Combine(projectDir, tempPath);
-                AssetDatabase.CreateAsset(db, tempPath);
-                File.Delete(absoluteDBPath);
-                File.Move(absoluteTempPath, absoluteDBPath);
-                File.Delete(absoluteTempPath + ".meta");
-                AssetDatabase.Refresh();
-            }
-            else
-            {
-                AssetDatabase.CreateAsset(db, AssetHolder.Path);
-            }
+            EditorUtility.SetDirty(db);
+            AssetDatabase.SaveAssets();
         }
 
         private void OnPreprocessTexture()
@@ -152,11 +144,6 @@ namespace GameCanvas.Editor
                 // インポートした画像をパッキングタグ付きスプライトにします
                 var importer = (TextureImporter)assetImporter;
                 importer.textureType = TextureImporterType.Sprite;
-#if UNITY_5_4
-                importer.textureFormat = TextureImporterFormat.AutomaticCompressed;
-                importer.SetPlatformTextureSettings("Android", 2048, TextureImporterFormat.ETC2_RGBA8, 80, true);
-                importer.SetPlatformTextureSettings("iPhone", 2048, TextureImporterFormat.PVRTC_RGBA4, 80, true);
-#else
                 importer.textureCompression = TextureImporterCompression.CompressedHQ;
                 importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings()
                 {
@@ -178,7 +165,6 @@ namespace GameCanvas.Editor
                     allowsAlphaSplitting = true,
                     overridden = true
                 });
-#endif
                 importer.filterMode = FilterMode.Point;
                 importer.mipmapEnabled = false;
                 importer.spriteImportMode = path.Contains("Circle") ? SpriteImportMode.Polygon :
