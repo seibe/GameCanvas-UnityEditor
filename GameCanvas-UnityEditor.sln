@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameCanvas-UnityEditor", "GameCanvas-UnityEditor.csproj", "{65E5CCFF-2FED-44FA-8C84-96CEF62D678D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{B4B205C5-48D3-4643-8FAD-911966765243} = {B4B205C5-48D3-4643-8FAD-911966765243}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameCanvas-Unity", "GameCanvas-Unity.csproj", "{B4B205C5-48D3-4643-8FAD-911966765243}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{65E5CCFF-2FED-44FA-8C84-96CEF62D678D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65E5CCFF-2FED-44FA-8C84-96CEF62D678D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4B205C5-48D3-4643-8FAD-911966765243}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4B205C5-48D3-4643-8FAD-911966765243}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
