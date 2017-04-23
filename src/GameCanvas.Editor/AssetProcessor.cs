@@ -8,6 +8,7 @@
 /// </remarks>
 /*------------------------------------------------------------*/
 
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -88,11 +89,31 @@ namespace GameCanvas.Editor
             AssetDatabase.SaveAssets();
         }
 
+        /*------------------------------------------------------------*/
+
+        private static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+        {
+            if (willRebuildAssetDB) return;
+
+            var assets = deletedAssets
+                .Concat(movedAssets)
+                .Concat(movedFromAssetPaths)
+                .Distinct();
+
+            foreach (string assetPath in assets)
+            {
+                if (cReg.IsMatch(assetPath))
+                {
+                    EditorApplication.update += RebuildAssetDatabase;
+                    willRebuildAssetDB = true;
+                    return;
+                }
+            }
+        }
+
         private void OnPreprocessTexture()
         {
-            var path = assetImporter.assetPath;
-
-            if (path.IndexOf(ResourceImagePrefix) == 0)
+            if (cReg.IsMatch(assetPath))
             {
                 // インポートした画像をパッキングタグ付きスプライトにします
                 var importer = (TextureImporter)assetImporter;
@@ -139,7 +160,7 @@ namespace GameCanvas.Editor
                     willRebuildAssetDB = true;
                 }
             }
-            else if (path.IndexOf(SpriteDir + "/") == 0)
+            else if (assetPath.IndexOf(SpriteDir) == 0)
             {
                 // インポートした画像をパッキングタグ付きスプライトにします
                 var importer = (TextureImporter)assetImporter;
@@ -167,17 +188,15 @@ namespace GameCanvas.Editor
                 });
                 importer.filterMode = FilterMode.Point;
                 importer.mipmapEnabled = false;
-                importer.spriteImportMode = path.Contains("Circle") ? SpriteImportMode.Polygon :
-                                            path.Contains("PixelMplus10") ? SpriteImportMode.Multiple : SpriteImportMode.Single;
-                importer.spritePackingTag = path.Contains("Dummy") ? string.Empty : PackingTag;
+                importer.spriteImportMode = assetPath.Contains("Circle") ? SpriteImportMode.Polygon :
+                                            assetPath.Contains("PixelMplus10") ? SpriteImportMode.Multiple : SpriteImportMode.Single;
+                importer.spritePackingTag = assetPath.Contains("Dummy") ? string.Empty : PackingTag;
             }
         }
 
         private void OnPreprocessAudio()
         {
-            var path = assetImporter.assetPath;
-
-            if (path.IndexOf(ResourceSoundPrefix) == 0)
+            if (cReg.IsMatch(assetPath))
             {
                 // インポートした音声の圧縮を設定します
                 var audioImporter = (AudioImporter)assetImporter;
@@ -194,17 +213,20 @@ namespace GameCanvas.Editor
             }
         }
 
+        /*------------------------------------------------------------*/
+
         const string ResourceDir = "Assets/Res";
-        const string ResourceImagePrefix = ResourceDir + "/img";
-        const string ResourceSoundPrefix = ResourceDir + "/snd";
         const string PackingTag = "GCAtlas";
-        const string SpriteDir = "Assets/Plugins/UnityGC/Sprites";
-        const string RectPath = SpriteDir + "/Rect.png";
-        const string CirclePath = SpriteDir + "/Circle.png";
-        const string DummyPath = SpriteDir + "/Dummy.png";
-        const string FontPath = SpriteDir + "/PixelMplus10.png";
+        const string SpriteDir = "Assets/Plugins/UnityGC/Sprites/";
+        const string RectPath = SpriteDir + "Rect.png";
+        const string CirclePath = SpriteDir + "Circle.png";
+        const string DummyPath = SpriteDir + "Dummy.png";
+        const string FontPath = SpriteDir + "PixelMplus10.png";
         const string MaterialDir = "Assets/Plugins/UnityGC/Materials";
         const string MaterialPath = MaterialDir + "/GCSpriteDefault.mat";
+
+        static readonly Regex cReg = new Regex(@"^Assets/Res/(img|snd)\d+\.\w+$");
+
         static bool willRebuildAssetDB = false;
     }
 }
