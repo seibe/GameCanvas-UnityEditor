@@ -9,6 +9,7 @@
 /*------------------------------------------------------------*/
 
 using System.IO;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -19,13 +20,13 @@ namespace GameCanvas.Editor
     /// </summary>
     internal class Menu
     {
-        [MenuItem("GameCanvas/アプリをビルドする", false, 100)]
+        [MenuItem("GameCanvas/書き出し/アプリをビルドする", false, 100)]
         static void OpenBuilder()
         {
             BuildWindow.Open();
         }
 
-        [MenuItem("GameCanvas/Game.cs をクリップボードにコピー", false, 200)]
+        [MenuItem("GameCanvas/書き出し/Game.cs をクリップボードにコピー", false, 200)]
         static void CopyScript()
         {
             var targetPath = Path.Combine(Application.dataPath, "Scripts/Game.cs");
@@ -40,13 +41,45 @@ namespace GameCanvas.Editor
             Debug.Log("クリップボードに Game.cs の内容をコピーしました");
         }
 
-        [MenuItem("GameCanvas/UnityPackage の書き出し", false, 201)]
+        [MenuItem("GameCanvas/書き出し/UnityPackage を書き出す", false, 201)]
         static void ExportUnityPackage()
         {
             EditorApplication.ExecuteMenuItem("Assets/Export Package...");
         }
 
-        [MenuItem("GameCanvas/アセットデータベースの強制更新", false, 202)]
+        [MenuItem("GameCanvas/エディタ設定/タッチ操作の無効化", false, 202)]
+        static void DisableTouchInEditor()
+        {
+            var currentBuildTargetGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
+            var symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup(currentBuildTargetGroup)
+                .Split(';')
+                .Select(symbol => symbol.Trim())
+                .Distinct()
+                .ToList();
+            if (!symbols.Contains("GC_DISABLE_TOUCH"))
+            {
+                symbols.Add("GC_DISABLE_TOUCH");
+            }
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(currentBuildTargetGroup, string.Join(";", symbols.ToArray()));
+        }
+
+        [MenuItem("GameCanvas/エディタ設定/タッチ操作の有効化", false, 203)]
+        static void EnableTouchInEditor()
+        {
+            var currentBuildTargetGroup = EditorUserBuildSettings.selectedBuildTargetGroup;
+            var symbols = PlayerSettings.GetScriptingDefineSymbolsForGroup(currentBuildTargetGroup)
+                .Split(';')
+                .Select(symbol => symbol.Trim())
+                .Distinct()
+                .ToList();
+            if (symbols.Contains("GC_DISABLE_TOUCH"))
+            {
+                symbols.Remove("GC_DISABLE_TOUCH");
+            }
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(currentBuildTargetGroup, string.Join(";", symbols.ToArray()));
+        }
+
+        [MenuItem("GameCanvas/エディタ設定/アセットデータベースの強制更新", false, 300)]
         static void ForceRebuildDatabase()
         {
             AssetProcessor.RebuildAssetDatabase();
