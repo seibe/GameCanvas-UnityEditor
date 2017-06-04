@@ -9,12 +9,12 @@ namespace GameCanvas
         /// <summary>
         /// バージョン
         /// </summary>
-        public const string Version = "1.3.1.0";
+        public const string Version = "1.3.4.0";
 
         /// <summary>
         /// バージョン表記
         /// </summary>
-        public const string DisplayName = "1.3.1";
+        public const string DisplayName = "1.3.4";
 
         /// <summary>
         /// プロダクト名
