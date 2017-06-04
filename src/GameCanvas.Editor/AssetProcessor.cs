@@ -24,11 +24,7 @@ namespace GameCanvas.Editor
     {
         public static void RebuildAssetDatabase()
         {
-            if (willRebuildAssetDB)
-            {
-                EditorApplication.update -= RebuildAssetDatabase;
-                willRebuildAssetDB = false;
-            }
+            willRebuildAssetDB = false;
             var projectDir = Path.GetDirectoryName(Application.dataPath);
 
             // 画像データの取得
@@ -104,46 +100,33 @@ namespace GameCanvas.Editor
             {
                 if (cReg.IsMatch(assetPath))
                 {
-                    EditorApplication.update += RebuildAssetDatabase;
+                    EditorApplication.delayCall += RebuildAssetDatabase;
                     willRebuildAssetDB = true;
                     return;
                 }
             }
         }
 
-        private void OnPreprocessTexture()
+        private void OnPostprocessTexture(Texture2D tex)
         {
-            if (cReg.IsMatch(assetPath))
+            var importer = (TextureImporter)assetImporter;
+            if (importer.userData == Version) return;
+
+            if (cReg.IsMatch(base.assetPath))
             {
                 // インポートした画像をパッキングタグ付きスプライトにします
-                var importer = (TextureImporter)assetImporter;
+                importer.userData = Version;
                 importer.textureType = TextureImporterType.Sprite;
                 importer.textureCompression = TextureImporterCompression.CompressedHQ;
-                importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings()
-                {
-                    name = "Android",
-                    maxTextureSize = 2048,
-                    format = TextureImporterFormat.ETC2_RGBA8,
-                    compressionQuality = 80,
-                    textureCompression = TextureImporterCompression.CompressedHQ,
-                    allowsAlphaSplitting = true,
-                    overridden = true
-                });
-                importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings()
-                {
-                    name = "iPhone",
-                    maxTextureSize = 2048,
-                    format = TextureImporterFormat.PVRTC_RGBA4,
-                    compressionQuality = 80,
-                    textureCompression = TextureImporterCompression.CompressedHQ,
-                    allowsAlphaSplitting = true,
-                    overridden = true
-                });
+                importer.SetPlatformTextureSettings(cTextureSetting_Android);
+                importer.SetPlatformTextureSettings(cTextureSetting_iOS);
                 importer.filterMode = FilterMode.Point;
                 importer.mipmapEnabled = false;
                 importer.spriteImportMode = SpriteImportMode.Single;
                 importer.spritePixelsPerUnit = 1f;
                 importer.spritePackingTag = PackingTag;
+                EditorUtility.SetDirty(importer);
+                importer.SaveAndReimport();
 
                 var so = new SerializedObject(importer);
                 var sp = so.FindProperty("m_Alignment");
@@ -156,45 +139,29 @@ namespace GameCanvas.Editor
 
                 if (!willRebuildAssetDB)
                 {
-                    EditorApplication.update += RebuildAssetDatabase;
+                    EditorApplication.delayCall += RebuildAssetDatabase;
                     willRebuildAssetDB = true;
                 }
             }
-            else if (assetPath.IndexOf(SpriteDir) == 0)
+            else if (base.assetPath.IndexOf(SpriteDir) == 0)
             {
                 // インポートした画像をパッキングタグ付きスプライトにします
-                var importer = (TextureImporter)assetImporter;
+                importer.userData = Version;
                 importer.textureType = TextureImporterType.Sprite;
                 importer.textureCompression = TextureImporterCompression.CompressedHQ;
-                importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings()
-                {
-                    name = "Android",
-                    maxTextureSize = 2048,
-                    format = TextureImporterFormat.ETC2_RGBA8,
-                    compressionQuality = 80,
-                    textureCompression = TextureImporterCompression.CompressedHQ,
-                    allowsAlphaSplitting = true,
-                    overridden = true
-                });
-                importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings()
-                {
-                    name = "iPhone",
-                    maxTextureSize = 2048,
-                    format = TextureImporterFormat.PVRTC_RGBA4,
-                    compressionQuality = 80,
-                    textureCompression = TextureImporterCompression.CompressedHQ,
-                    allowsAlphaSplitting = true,
-                    overridden = true
-                });
+                importer.SetPlatformTextureSettings(cTextureSetting_Android);
+                importer.SetPlatformTextureSettings(cTextureSetting_iOS);
                 importer.filterMode = FilterMode.Point;
                 importer.mipmapEnabled = false;
-                importer.spriteImportMode = assetPath.Contains("Circle") ? SpriteImportMode.Polygon :
-                                            assetPath.Contains("PixelMplus10") ? SpriteImportMode.Multiple : SpriteImportMode.Single;
-                importer.spritePackingTag = assetPath.Contains("Dummy") ? string.Empty : PackingTag;
+                importer.spriteImportMode = base.assetPath.Contains("Circle") ? SpriteImportMode.Polygon :
+                                            base.assetPath.Contains("PixelMplus10") ? SpriteImportMode.Multiple : SpriteImportMode.Single;
+                importer.spritePackingTag = base.assetPath.Contains("Dummy") ? string.Empty : PackingTag;
+                EditorUtility.SetDirty(importer);
+                importer.SaveAndReimport();
             }
         }
 
-        private void OnPreprocessAudio()
+        private void OnPostprocessAudio(AudioClip audio)
         {
             if (cReg.IsMatch(assetPath))
             {
@@ -215,6 +182,8 @@ namespace GameCanvas.Editor
 
         /*------------------------------------------------------------*/
 
+        const string Version = "GameCanvas AssetImporter 1.3.2.7";
+
         const string ResourceDir = "Assets/Res";
         const string PackingTag = "GCAtlas";
         const string SpriteDir = "Assets/Plugins/UnityGC/Sprites/";
@@ -226,6 +195,26 @@ namespace GameCanvas.Editor
         const string MaterialPath = MaterialDir + "/GCSpriteDefault.mat";
 
         static readonly Regex cReg = new Regex(@"^Assets/Res/(img|snd)\d+\.\w+$");
+
+        static readonly TextureImporterPlatformSettings cTextureSetting_Android = new TextureImporterPlatformSettings()
+        {
+            name = "Android",
+            maxTextureSize = 2048,
+            format = TextureImporterFormat.ETC2_RGBA8,
+            compressionQuality = 80,
+            textureCompression = TextureImporterCompression.CompressedHQ,
+            allowsAlphaSplitting = false,
+            overridden = true
+        };
+        static readonly TextureImporterPlatformSettings cTextureSetting_iOS = new TextureImporterPlatformSettings()
+        {
+            name = "iPhone",
+            maxTextureSize = 2048,
+            format = TextureImporterFormat.RGBA32,
+            textureCompression = TextureImporterCompression.Uncompressed,
+            allowsAlphaSplitting = false,
+            overridden = true
+        };
 
         static bool willRebuildAssetDB = false;
     }
